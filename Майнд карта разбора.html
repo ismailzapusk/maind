@@ -1,0 +1,273 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Майнд карта разбора</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap&subset=cyrillic">
+<style>
+:root{
+  /* Макет: чистый монохром. Чёрный фон по умолчанию, белый по кнопке. Карта вверху с белым центром, ниже ветки раскрываются тонкими линиями без заливок. Цвет только для смысла */
+  --bg:#000; --ink:#F5F5F2; --muted:#8E8E8A; --line:#2A2A2A; --line2:#4A4A4A; --hub-ink:#000;
+  --green:#8FC4A0; --red:#E48F8F; --gold:#D9C78F;
+  --display:'Cormorant Garamond','Georgia',serif;
+  --body:'Onest','Segoe UI',system-ui,sans-serif;
+  color-scheme:dark;
+}
+:root[data-theme="light"]{
+  --bg:#FFFFFF; --ink:#0B0B0B; --muted:#6F6F6B; --line:#E4E4E0; --line2:#B9B9B4; --hub-ink:#fff;
+  --green:#2F7A52; --red:#B8433F; --gold:#85691A; color-scheme:light;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16.5px;line-height:1.65;font-weight:400;
+  padding-left:max(18px, env(safe-area-inset-left, 0px));padding-right:max(18px, env(safe-area-inset-right, 0px));padding-block:48px 90px}
+.wrap{max-width:700px;margin:0 auto;display:flex;flex-direction:column;gap:46px}
+h1,h2,h3{font-family:var(--display);font-weight:500;margin:0;line-height:1.1;text-wrap:balance}
+header{display:flex;flex-direction:column;gap:18px;align-items:flex-start}
+h1{font-size:clamp(46px,13vw,76px);letter-spacing:-.02em}
+.rule{width:56px;height:1px;background:var(--ink)}
+.lead{margin:0;color:var(--muted);max-width:50ch}
+.legend{display:flex;flex-wrap:wrap;gap:18px;font-size:13px;color:var(--muted);letter-spacing:.02em}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend i{width:7px;height:7px;border-radius:50%}
+.mapbox{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:26px 0 14px}
+.mapbox svg{display:block;width:100%;height:auto;max-width:520px;margin:0 auto}
+.mapbox .hint{margin:8px 0 0;text-align:center;font-size:12.5px;color:var(--muted);letter-spacing:.04em}
+.lnk{fill:none;stroke:var(--line2);stroke-width:1}
+.node{cursor:pointer}
+.node rect{fill:var(--bg);stroke:var(--line2);stroke-width:1;transition:stroke .15s}
+.node:hover rect,.node:focus-visible rect{stroke:var(--ink)}
+.node:focus-visible{outline:none}
+.node text{font-family:var(--body);font-size:12.5px;fill:var(--ink)}
+.node .bd{fill:var(--bg);stroke:var(--ink);stroke-width:1}
+.node .bn{font-size:11px;fill:var(--ink);font-weight:600}
+.node .wk{fill:var(--red)}
+.hub circle{fill:var(--ink)}
+.hub text{font-family:var(--display);font-size:14px;fill:var(--hub-ink);font-weight:600}
+.center small{display:block;font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.center h2{font-size:clamp(32px,8vw,46px)}
+.center p{margin:14px 0 0;color:var(--muted);max-width:52ch}
+.ctrl{display:flex;gap:10px;flex-wrap:wrap;margin-top:-18px}
+button{font:inherit;font-size:13.5px;letter-spacing:.02em;padding:9px 18px;border-radius:999px;border:1px solid var(--line2);background:transparent;color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--ink)}
+button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.tree{display:flex;flex-direction:column;list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.tree>li{border-bottom:1px solid var(--line)}
+details{scroll-margin-top:16px}
+summary{list-style:none;cursor:pointer;padding:26px 0;display:grid;grid-template-columns:auto 1fr auto;gap:20px;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.num{font-family:var(--display);font-size:46px;line-height:1;color:var(--muted);min-width:34px;font-weight:400}
+details[open] .num{color:var(--ink)}
+.st{min-width:0;display:flex;flex-direction:column;gap:6px}
+.st h3{font-size:clamp(23px,5.4vw,30px);line-height:1.15}
+.badges{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);letter-spacing:.04em}
+.badges .r{color:var(--red)}
+.arrow{width:9px;height:9px;border-right:1px solid var(--ink);border-bottom:1px solid var(--ink);transform:rotate(45deg);transition:transform .2s;margin-right:4px}
+details[open] .arrow{transform:rotate(-135deg)}
+.body{padding:0 0 34px;display:flex;flex-direction:column;gap:26px}
+.quote{margin:0;font-family:var(--display);font-style:italic;font-size:clamp(21px,5vw,26px);line-height:1.35;color:var(--ink);padding-left:18px;border-left:1px solid var(--ink)}
+.leaves{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.leaf{position:relative;padding:18px 0 18px 26px;display:flex;flex-direction:column;gap:6px;min-width:0;border-top:1px solid var(--line)}
+.leaf:first-child{border-top:0}
+.leaf::before{content:"";position:absolute;left:0;top:27px;width:8px;height:8px;border-radius:50%;background:var(--c)}
+.leaf.s{--c:var(--green)} .leaf.w{--c:var(--red)} .leaf.y{--c:var(--gold)}
+.leaf .t{font-weight:600}
+.leaf .x{font-size:15.5px;color:var(--muted)}
+.leaf .x i,.leaf .tag{font-style:normal;font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;margin-right:8px;color:var(--c)}
+.leaf .tag{display:block;margin:0}
+.leaf.w .t{color:var(--red)}
+.leaf.y .x{color:var(--ink)}
+.block{display:flex;flex-direction:column;gap:20px;padding-top:34px;border-top:1px solid var(--ink)}
+.block h2{font-size:clamp(34px,8.5vw,48px)}
+.block p{margin:0;color:var(--ink);max-width:56ch}
+.block.y h2{color:var(--gold)} .block.r h2{color:var(--red)} .block.g h2{color:var(--green)}
+.block ol{margin:0;padding-left:26px;display:flex;flex-direction:column;gap:12px}
+.block.r li::marker{color:var(--red)}
+.note{font-size:13px;color:var(--muted);margin:0}
+.days{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:34px 28px}
+.day{display:flex;flex-direction:column;gap:12px;min-width:0;border-top:1px solid var(--green);padding-top:16px}
+.day h3{font-size:28px;color:var(--green)}
+.day ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:9px;font-size:15.5px}
+@media (prefers-reduced-motion: reduce){.arrow,.node rect{transition:none}}
+</style>
+<main class="wrap">
+<header><h1>Майнд карта разбора</h1><div class="rule"></div><p class="lead">Твой путь от фундамента до первых клиентов. Красным отмечено то, что легко не заметить самому.</p>
+<div class="legend"><span><i style="background:var(--green)"></i>шаг</span><span><i style="background:var(--red)"></i>слабое место</span><span><i style="background:var(--gold)"></i>главный вывод</span></div></header>
+<section class="mapbox"><svg viewBox="0 0 400 374" role="group" aria-label="Карта разбора"><path class="lnk" d="M200 187 C 160 187, 160 36, 126 36"/><path class="lnk" d="M200 187 C 160 187, 160 137, 126 137"/><path class="lnk" d="M200 187 C 160 187, 160 237, 126 237"/><path class="lnk" d="M200 187 C 160 187, 160 338, 126 338"/><path class="lnk" d="M200 187 C 240 187, 240 36, 274 36"/><path class="lnk" d="M200 187 C 240 187, 240 137, 274 137"/><path class="lnk" d="M200 187 C 240 187, 240 237, 274 237"/><path class="lnk" d="M200 187 C 240 187, 240 338, 274 338"/><g class="hub"><circle cx="200" cy="187" r="46"/><text x="200" y="174" text-anchor="middle">Фундамент</text><text x="200" y="192" text-anchor="middle">и первые</text><text x="200" y="210" text-anchor="middle">клиенты</text></g><g class="node" data-go="s1" role="button" tabindex="0" aria-label="Выбор дороги"><rect x="8" y="13" width="118" height="46" rx="12"/><text x="67" y="40" text-anchor="middle">Выбор дороги</text><circle class="bd" cx="17" cy="13" r="10"/><text class="bn" x="17" y="17" text-anchor="middle">1</text><circle class="wk" cx="117" cy="13" r="4"/></g><g class="node" data-go="s2" role="button" tabindex="0" aria-label="Лид магнит"><rect x="8" y="114" width="118" height="46" rx="12"/><text x="67" y="141" text-anchor="middle">Лид магнит</text><circle class="bd" cx="17" cy="114" r="10"/><text class="bn" x="17" y="118" text-anchor="middle">2</text><circle class="wk" cx="117" cy="114" r="4"/></g><g class="node" data-go="s3" role="button" tabindex="0" aria-label="Рилсы и созвон"><rect x="8" y="214" width="118" height="46" rx="12"/><text x="67" y="242" text-anchor="middle">Рилсы и созвон</text><circle class="bd" cx="17" cy="214" r="10"/><text class="bn" x="17" y="218" text-anchor="middle">3</text><circle class="wk" cx="117" cy="214" r="4"/></g><g class="node" data-go="s4" role="button" tabindex="0" aria-label="Контент план"><rect x="8" y="315" width="118" height="46" rx="12"/><text x="67" y="342" text-anchor="middle">Контент план</text><circle class="bd" cx="17" cy="315" r="10"/><text class="bn" x="17" y="319" text-anchor="middle">4</text><circle class="wk" cx="117" cy="315" r="4"/></g><g class="node" data-go="s5" role="button" tabindex="0" aria-label="Оффер и WhatsApp"><rect x="274" y="13" width="118" height="46" rx="12"/><text x="333" y="33" text-anchor="middle">Оффер и</text><text x="333" y="48" text-anchor="middle">WhatsApp</text><circle class="bd" cx="283" cy="13" r="10"/><text class="bn" x="283" y="17" text-anchor="middle">5</text><circle class="wk" cx="383" cy="13" r="4"/></g><g class="node" data-go="s6" role="button" tabindex="0" aria-label="Настрой"><rect x="274" y="114" width="118" height="46" rx="12"/><text x="333" y="141" text-anchor="middle">Настрой</text><circle class="bd" cx="283" cy="114" r="10"/><text class="bn" x="283" y="118" text-anchor="middle">6</text><circle class="wk" cx="383" cy="114" r="4"/></g><g class="node" data-go="s7" role="button" tabindex="0" aria-label="Энергия и фокус"><rect x="274" y="214" width="118" height="46" rx="12"/><text x="333" y="242" text-anchor="middle">Энергия и фокус</text><circle class="bd" cx="283" cy="214" r="10"/><text class="bn" x="283" y="218" text-anchor="middle">7</text><circle class="wk" cx="383" cy="214" r="4"/></g><g class="node" data-go="s8" role="button" tabindex="0" aria-label="Закрытая воронка"><rect x="274" y="315" width="118" height="46" rx="12"/><text x="333" y="335" text-anchor="middle">Закрытая</text><text x="333" y="350" text-anchor="middle">воронка</text><circle class="bd" cx="283" cy="315" r="10"/><text class="bn" x="283" y="319" text-anchor="middle">8</text><circle class="wk" cx="383" cy="315" r="4"/></g></svg><p class="hint">Нажми на ветку, она откроется ниже</p></section>
+<section class="center"><small>В центре карты</small><h2>Сначала строим дом, потом зовём гостей</h2><p>Лид магнит, контент план и рилсы это твой фундамент. Когда он готов, на него наливают трафик и продают услуги и обучение.</p></section>
+<div class="ctrl"><button id="openAll" type="button">Раскрыть всё</button><button id="closeAll" type="button">Свернуть всё</button><button id="theme" type="button">Белый фон</button></div>
+<ol class="tree">
+<li><details id="s1"><summary><span class="num">1</span><span class="st"><h3>Где ты сейчас и какую дорогу выбрать</h3><span class="badges"><span>2 шага</span><span class="r">2 слабых места</span></span></span><span class="arrow" aria-hidden="true"></span></summary><div class="body">
+<blockquote class="quote">«Вайбкодинг для тебя в десять раз лучше тема, чем Телеграм. Телеграм больше подходит тому, кто готов вдолгую и умеет коммуницировать.»</blockquote>
+<ul class="leaves">
+<li class="leaf s"><span class="t">Ты уже заработал на вайбкодинге 90 500 рублей</span>
+<span class="x"><i>Зачем</i>Это доказательство, что навык продаётся. С этого можно стартовать.</span>
+</li>
+<li class="leaf s"><span class="t">Выбери одно направление, вайбкодинг</span>
+<span class="x"><i>Зачем</i>Делать Телеграм и сайты одновременно долго и тяжело. Исмаил говорит, что на твоём месте выбрал бы вайбкодинг на сто процентов.</span>
+</li>
+<li class="leaf y"><span class="tag">Простыми словами</span><span class="x" style="opacity:1">Ты выбираешь одну дорогу вместо двух. Делать сайты и приложения тебе проще и быстрее, чем годами вести канал.</span></li>
+<li class="leaf w"><span class="tag">Слабое место</span><span class="t">Первые деньги пока не система</span><span class="x">Деньги пришли, но в разборе не сказано, от кого они и как тебя нашли. Повторить такое без понимания сложно.</span><span class="x"><i>Что делать</i>Выпиши, кто тебе платил и как он на тебя вышел. Повторяй то, что сработало.</span></li>
+<li class="leaf w"><span class="tag">Слабое место</span><span class="t">Отказ от Телеграма не отменяет общение</span><span class="x">Исмаил сам говорит, что Телеграм требует умения общаться. Но услуги и обучение тебе всё равно придётся продавать словами.</span><span class="x"><i>Что делать</i>Каждый день тренируйся писать клиентам коротко и понятно.</span></li>
+</ul></div></details></li>
+<li><details id="s2"><summary><span class="num">2</span><span class="st"><h3>Лид магнит. Бесплатный материал, который продаёт</h3><span class="badges"><span>8 шагов</span><span class="r">3 слабых места</span></span></span><span class="arrow" aria-hidden="true"></span></summary><div class="body">
+<blockquote class="quote">«Моя задача создать бесплатный продающий материал, который продаст меня как вайбкодера, продаст тему вайбкодинга и станет полезным людям.»</blockquote>
+<ul class="leaves">
+<li class="leaf s"><span class="t">Сними ролик от 10 до 20 минут о вайбкодинге</span>
+<span class="x"><i>Зачем</i>Людям нужно, на что прийти. Ролик притягивает их к тебе.</span>
+<span class="x"><i>Пример</i>Исмаил прислал тебе свой лид магнит про нишу, на которой можно стабильно зарабатывать. Делай по его структуре.</span>
+</li>
+<li class="leaf s"><span class="t">Ответь в ролике на три вопроса</span>
+<span class="x"><i>Зачем</i>Что это за навык, как люди на нём зарабатывают и что он даёт.</span>
+<span class="x"><i>Пример</i>Не нужно изображать суперэксперта. Просто честно расскажи о теме.</span>
+</li>
+<li class="leaf s"><span class="t">Проверь, что материал делает три дела сразу</span>
+<span class="x"><i>Зачем</i>Он продаёт тебя как вайбкодера, продаёт саму тему и полезен людям.</span>
+</li>
+<li class="leaf s"><span class="t">Собери текст вместе с Клодом</span>
+<span class="x"><i>Зачем</i>Это займёт несколько часов, не больше.</span>
+<span class="x"><i>Пример</i>Вставь в Клод задачу и материал Исмаила. Клод задаст наводящие вопросы, ты ответишь голосовыми, он соберёт структуру.</span>
+</li>
+<li class="leaf s"><span class="t">Отправь готовый текст Исмаилу на одобрение</span>
+<span class="x"><i>Зачем</i>Он проверит, всё ли чётко. Записывать можно только после его одобрения.</span>
+</li>
+<li class="leaf s"><span class="t">Запиши ролик</span>
+<span class="x"><i>Зачем</i>Исмаил подскажет, как поставить программу для записи экрана.</span>
+</li>
+<li class="leaf s"><span class="t">Сделай презентацию через Клод по промпту Исмаила</span>
+<span class="x"><i>Зачем</i>Раньше один хороший слайд стоил от 250 до 1500 рублей, сейчас это бесплатно.</span>
+</li>
+<li class="leaf s"><span class="t">Выложи материал в свой Телеграм канал по образцу Исмаила</span>
+<span class="x"><i>Зачем</i>Он пришлёт пример, как оформить такой пост.</span>
+</li>
+<li class="leaf y"><span class="tag">Простыми словами</span><span class="x" style="opacity:1">Лид магнит это подарок. Человек бесплатно получает пользу, видит, что ты разбираешься, и потом сам приходит покупать.</span></li>
+<li class="leaf w"><span class="tag">Слабое место</span><span class="t">Не выбрано, для кого ролик</span><span class="x">Тем, кто хочет научиться, и тем, кому нужен готовый сайт, интересно разное. В разборе это не разделили.</span><span class="x"><i>Что делать</i>Выбери одного зрителя и весь ролик говори с ним. Для второго потом сделай отдельный материал.</span></li>
+<li class="leaf w"><span class="tag">Слабое место</span><span class="t">Нет ноутбука</span><span class="x">Запись и презентация завязаны на компьютер, а ты сказал, что пока ищешь ноутбук.</span><span class="x"><i>Что делать</i>Сегодня реши, на чём будешь записывать. Если ноутбука нет, делай всё с телефона.</span></li>
+<li class="leaf w"><span class="tag">Слабое место</span><span class="t">В конце ролика нет понятного следующего шага</span><span class="x">Как зритель станет твоим клиентом, в разборе не проговорили.</span><span class="x"><i>Что делать</i>В конце дай одно действие, например написать тебе в личку кодовое слово.</span></li>
+</ul></div></details></li>
+<li><details id="s3"><summary><span class="num">3</span><span class="st"><h3>Рилсы и созвон с Кириллом</h3><span class="badges"><span>3 шага</span><span class="r">2 слабых места</span></span></span><span class="arrow" aria-hidden="true"></span></summary><div class="body">
+<blockquote class="quote">«Представь дом, когда строится сильный фундамент. Всё, что останется потом, это налить на него трафик.»</blockquote>
+<ul class="leaves">
+<li class="leaf s"><span class="t">Сегодня вечером созвон по рилсам с Кириллом</span>
+<span class="x"><i>Зачем</i>Кирилл помогает Исмаилу с влогами, у него сильная насмотренность. Он подскажет хуки (первые секунды ролика, которые цепляют) и какие рилсы снять.</span>
+</li>
+<li class="leaf s"><span class="t">Покажи Исмаилу идеи рилсов</span>
+<span class="x"><i>Зачем</i>Он проверит и одобрит, какие снимать.</span>
+</li>
+<li class="leaf s"><span class="t">Развивай медийку</span>
+<span class="x"><i>Зачем</i>По словам Исмаила, чтобы зарабатывать онлайн, нужно быть заметным и делать сильные воронки (путь человека от первого касания до покупки).</span>
+</li>
+<li class="leaf y"><span class="tag">Простыми словами</span><span class="x" style="opacity:1">Сначала строишь дом, где людям есть что посмотреть. Только потом зовёшь гостей через рекламу.</span></li>
+<li class="leaf w"><span class="tag">Слабое место</span><span class="t">Трафик обещан потом, но без деталей</span><span class="x">Не сказано, откуда придут люди, сколько это стоит и когда начнётся.</span><span class="x"><i>Что делать</i>Спроси у Исмаила, какой источник и какой бюджет планируются.</span></li>
+<li class="leaf w"><span class="tag">Слабое место</span><span class="t">Неясно, что подготовить к созвону</span><span class="x">Исмаил сказал, что перед зумом нужно что то сделать, но что именно, в записи не слышно.</span><span class="x"><i>Что делать</i>Уточни у него до вечера.</span></li>
+</ul></div></details></li>
+<li><details id="s4"><summary><span class="num">4</span><span class="st"><h3>Экспертная модель и контент план</h3><span class="badges"><span>4 шага</span><span class="r">2 слабых места</span></span></span><span class="arrow" aria-hidden="true"></span></summary><div class="body">
+<blockquote class="quote">«Дай мне конкретные, точные темы. Не расплывчатые, не направления, а точный контент план.»</blockquote>
+<ul class="leaves">
+<li class="leaf s"><span class="t">Признай, что первая экспертная модель не подошла</span>
+<span class="x"><i>Зачем</i>Она слишком расплывчатая, по ней нельзя сразу снимать.</span>
+</li>
+<li class="leaf s"><span class="t">Напиши Клоду точный запрос</span>
+<span class="x"><i>Зачем</i>Чтобы получить готовые темы, а не общие слова.</span>
+<span class="x"><i>Пример</i>«Ты дал слишком расплывчатые направления. На основе экспертной модели дай конкретные темы для подкастов и постов».</span>
+</li>
+<li class="leaf s"><span class="t">Получи пошаговый контент план</span>
+<span class="x"><i>Зачем</i>Каждая тема должна быть готова к записи.</span>
+</li>
+<li class="leaf s"><span class="t">Запиши и выложи всё за 1 или 2 дня</span>
+<span class="x"><i>Зачем</i>Это часть дома, куда потом будут приходить люди.</span>
+</li>
+<li class="leaf y"><span class="tag">Простыми словами</span><span class="x" style="opacity:1">«Пишу про вайбкодинг» это направление. «Как я сделал сайт за вечер и получил за него деньги» это тема. Тебе нужны именно темы.</span></li>
+<li class="leaf w"><span class="tag">Слабое место</span><span class="t">Очень плотный срок</span><span class="x">1 или 2 дня на контент план, записи и посты, а параллельно лид магнит и рилсы. Легко перегореть и сделать всё наполовину.</span><span class="x"><i>Что делать</i>Расставь задачи по дням и делай по одной.</span></li>
+<li class="leaf w"><span class="tag">Слабое место</span><span class="t">Темы без твоих историй будут как у всех</span><span class="x">Если Клод даст общие темы, твой контент не будет отличаться от сотен других.</span><span class="x"><i>Что делать</i>В каждую тему добавь один реальный случай из своей работы.</span></li>
+</ul></div></details></li>
+<li><details id="s5"><summary><span class="num">5</span><span class="st"><h3>Оффер и ролик для WhatsApp</h3><span class="badges"><span>4 шага</span><span class="r">4 слабых места</span></span></span><span class="arrow" aria-hidden="true"></span></summary><div class="body">
+<ul class="leaves">
+<li class="leaf s"><span class="t">Вместе с Исмаилом проработай оффер</span>
+<span class="x"><i>Зачем</i>Оффер это предложение. Что ты делаешь, для кого и почему стоит купить именно у тебя.</span>
+</li>
+<li class="leaf s"><span class="t">Сними один ролик для рассылки в WhatsApp</span>
+<span class="x"><i>Зачем</i>Чтобы пришли клиенты на услуги и сразу появились деньги.</span>
+</li>
+<li class="leaf s"><span class="t">Через лид магнит веди людей на обучение</span>
+<span class="x"><i>Зачем</i>Обучение нужно тем, кто вообще не понимает, как сделать сайт или приложение.</span>
+<span class="x"><i>Пример</i>Человек говорит, что готов заплатить 30 000 рублей за несколько встреч, где ему всё объяснят.</span>
+</li>
+<li class="leaf s"><span class="t">Получи два потока клиентов</span>
+<span class="x"><i>Зачем</i>Одни покупают услуги, другие покупают обучение.</span>
+</li>
+<li class="leaf y"><span class="tag">Простыми словами</span><span class="x" style="opacity:1">У тебя будет два кошелька. В один платят за готовые сайты, в другой за то, чтобы научиться делать их самому.</span></li>
+<li class="leaf w"><span class="tag">Слабое место</span><span class="t">Неясно, как работает рассылка в WhatsApp</span><span class="x">Кто будет раскидывать ролик, по каким чатам и сколько людей это увидит, не сказано.</span><span class="x"><i>Что делать</i>Уточни у Исмаила механику до того, как снимать.</span></li>
+<li class="leaf w"><span class="tag">Слабое место</span><span class="t">Для продажи обучения нужны доказательства</span><span class="x">Опыт пока небольшой, а рынок настроен недоверчиво.</span><span class="x"><i>Что делать</i>Собери 2 или 3 кейса с цифрами и сроками и отзывы клиентов.</span></li>
+<li class="leaf w"><span class="tag">Слабое место</span><span class="t">Две аудитории в одних материалах путают людей</span><span class="x">Клиенту нужен результат, ученику нужен навык. Это разные слова и разные выгоды.</span><span class="x"><i>Что делать</i>В каждом ролике и посте говори только с одной аудиторией.</span></li>
+<li class="leaf w"><span class="tag">Слабое место</span><span class="t">Цены на услуги не обсуждались</span><span class="x">В разборе нет ни одной цифры, сколько стоит сайт или приложение у тебя.</span><span class="x"><i>Что делать</i>Определи цену заранее, чтобы оффер был конкретным.</span></li>
+</ul></div></details></li>
+<li><details id="s6"><summary><span class="num">6</span><span class="st"><h3>Настрой. Не слушай хейтеров</h3><span class="badges"><span>3 шага</span><span class="r">1 слабое место</span></span></span><span class="arrow" aria-hidden="true"></span></summary><div class="body">
+<ul class="leaves">
+<li class="leaf s"><span class="t">Не обращай внимания на негатив про вайбкодинг</span>
+<span class="x"><i>Зачем</i>Сейчас многие говорят, что вайбкодеры ничего не умеют и сайты никому не нужны. По словам Исмаила, так говорят те, у кого не получилось.</span>
+</li>
+<li class="leaf s"><span class="t">Смотри на тех, у кого получается</span>
+<span class="x"><i>Зачем</i>Исмаил показывает ученицу, которая на 24 й день обучения уже зарабатывает.</span>
+</li>
+<li class="leaf s"><span class="t">Погружайся в вайбкодинг с головой</span>
+<span class="x"><i>Зачем</i>Он приводит в пример своего куратора. Она всё делает через телефон, даже лид магнит и приложения.</span>
+</li>
+<li class="leaf y"><span class="tag">Простыми словами</span><span class="x" style="opacity:1">Мнение тех, кто бросил, не прогноз для тебя. Важно, что получается у тех, кто дошёл до конца.</span></li>
+<li class="leaf w"><span class="tag">Слабое место</span><span class="t">Часть критики справедлива</span><span class="x">Клиенты правда боятся сырых сайтов, сделанных нейросетью наспех. Если просто игнорировать это, страх останется у покупателя.</span><span class="x"><i>Что делать</i>Ответь на этот страх в контенте. Покажи готовые работы, сроки и что будет, если что то сломается.</span></li>
+</ul></div></details></li>
+<li><details id="s7"><summary><span class="num">7</span><span class="st"><h3>Энергия и фокус</h3><span class="badges"><span>2 шага</span><span class="r">1 слабое место</span></span></span><span class="arrow" aria-hidden="true"></span></summary><div class="body">
+<ul class="leaves">
+<li class="leaf s"><span class="t">Береги себя от выгорания</span>
+<span class="x"><i>Зачем</i>Исмаил советует L теанин и ГАМК (называет бренды Now и Solgar), чтобы легче концентрироваться при большом объёме работы.</span>
+</li>
+<li class="leaf s"><span class="t">Работай сфокусированно</span>
+<span class="x"><i>Зачем</i>Он рассказывает, что сам много работал в отеле и там же снимал материалы.</span>
+</li>
+<li class="leaf y"><span class="tag">Простыми словами</span><span class="x" style="opacity:1">Чтобы сделать много за короткое время, нужны силы и концентрация.</span></li>
+<li class="leaf w"><span class="tag">Слабое место</span><span class="t">Это совет про здоровье, а не про маркетинг</span><span class="x">Добавки действуют на всех по разному.</span><span class="x"><i>Что делать</i>Перед приёмом любых добавок посоветуйся с врачом. Сон, еда и перерывы тоже дают фокус.</span></li>
+</ul></div></details></li>
+<li><details id="s8"><summary><span class="num">8</span><span class="st"><h3>Что будет потом. Закрытая воронка</h3><span class="badges"><span>4 шага</span><span class="r">1 слабое место</span></span></span><span class="arrow" aria-hidden="true"></span></summary><div class="body">
+<blockquote class="quote">«Когда мы будем тебе делать запуск, мы то же самое тебе будем делать.»</blockquote>
+<ul class="leaves">
+<li class="leaf s"><span class="t">Подпишись на канал, который пришлёт Исмаил</span>
+<span class="x"><i>Зачем</i>Там ты увидишь его закрытую воронку изнутри.</span>
+</li>
+<li class="leaf s"><span class="t">Изучи путь клиента у Исмаила</span>
+<span class="x"><i>Зачем</i>Бесплатное менторство и прогрев. Потом бесплатный разбор. На разборе бронь обучения за 1000 рублей с 6 бонусами. Потом закрытый канал, урок с разбором и продажа курса.</span>
+</li>
+<li class="leaf s"><span class="t">Посмотри на результат</span>
+<span class="x"><i>Зачем</i>По словам Исмаила, бронь оставили около 140 человек, сейчас уже около 150. Он говорит, что так за раз можно закрыть до 100 человек.</span>
+</li>
+<li class="leaf s"><span class="t">Позже возьми шаблоны дожимов</span>
+<span class="x"><i>Зачем</i>Дожимы это сообщения для тех, кто думал, но не купил. У Исмаила есть готовые шаблоны, но тебе пока рано.</span>
+</li>
+<li class="leaf y"><span class="tag">Простыми словами</span><span class="x" style="opacity:1">Сначала даёшь много пользы бесплатно, потом просишь маленький шаг (бронь за 1000 рублей), и только потом продаёшь большое обучение.</span></li>
+<li class="leaf w"><span class="tag">Слабое место</span><span class="t">Эти цифры получены на большой аудитории Исмаила</span><span class="x">Без своей базы подписчиков такой результат сразу не повторится.</span><span class="x"><i>Что делать</i>Сначала сделай фундамент из этапов 2, 3, 4 и 5, и только потом запуск.</span></li>
+</ul></div></details></li>
+</ol>
+<section class="block y"><h2>Итог разбора</h2><p>Ты уже заработал на вайбкодинге 90 500 рублей, и Исмаил советует идти именно в вайбкодинг, а не в Телеграм.</p><p>Первая задача сделать бесплатный лид магнит, ролик от 10 до 20 минут, который продаёт тебя, продаёт тему и полезен людям.</p><p>Вторая задача переделать экспертную модель в точный контент план с конкретными темами для постов и подкастов.</p><p>Третья задача созвон с Кириллом по рилсам, потом оффер и ролик для рассылки в WhatsApp, чтобы пришли первые клиенты.</p><p>Когда фундамент готов, на него наливают трафик и продают услуги и обучение, а позже делают запуск через закрытую воронку.</p></section>
+<section class="block r"><h2>Все слабые места</h2><ol><li>Первые деньги пока не система <span class='note'>(этап 1)</span></li><li>Отказ от Телеграма не отменяет общение <span class='note'>(этап 1)</span></li><li>Не выбрано, для кого ролик <span class='note'>(этап 2)</span></li><li>Нет ноутбука <span class='note'>(этап 2)</span></li><li>В конце ролика нет понятного следующего шага <span class='note'>(этап 2)</span></li><li>Трафик обещан потом, но без деталей <span class='note'>(этап 3)</span></li><li>Неясно, что подготовить к созвону <span class='note'>(этап 3)</span></li><li>Очень плотный срок <span class='note'>(этап 4)</span></li><li>Темы без твоих историй будут как у всех <span class='note'>(этап 4)</span></li><li>Неясно, как работает рассылка в WhatsApp <span class='note'>(этап 5)</span></li><li>Для продажи обучения нужны доказательства <span class='note'>(этап 5)</span></li><li>Две аудитории в одних материалах путают людей <span class='note'>(этап 5)</span></li><li>Цены на услуги не обсуждались <span class='note'>(этап 5)</span></li><li>Часть критики справедлива <span class='note'>(этап 6)</span></li><li>Это совет про здоровье, а не про маркетинг <span class='note'>(этап 7)</span></li><li>Эти цифры получены на большой аудитории Исмаила <span class='note'>(этап 8)</span></li></ol></section>
+<section class="block g"><h2>Что сделать за 3 дня</h2><div class="days">
+<div class="day"><h3>День 1</h3><ul><li>Реши, на чём будешь записывать, на ноутбуке или телефоне</li><li>Вставь в Клод задачу на лид магнит и ответь голосом на его вопросы</li><li>Уточни у Исмаила, что подготовить к созвону</li><li>Созвон с Кириллом по рилсам</li></ul></div>
+<div class="day"><h3>День 2</h3><ul><li>Отправь текст лид магнита Исмаилу на одобрение</li><li>Попроси у Клода конкретный контент план по экспертной модели</li><li>Запиши ролик лид магнита и сделай к нему презентацию</li></ul></div>
+<div class="day"><h3>День 3</h3><ul><li>Выложи лид магнит в канал по образцу Исмаила</li><li>Запиши первые посты или подкасты по контент плану</li><li>Сними рилсы, которые одобрит Исмаил</li><li>Собери 2 или 3 кейса с цифрами для будущего оффера</li></ul></div>
+</div></section>
+<p class="note">Карта сделана по расшифровке видео, поэтому отдельные слова и имена могли распознаться неточно. Всё, что в записи не прозвучало, отмечено как слабое место.</p>
+</main>
+<script>
+var all=function(){return document.querySelectorAll('details')};
+document.getElementById('openAll').addEventListener('click',function(){all().forEach(function(x){x.open=true})});
+document.getElementById('closeAll').addEventListener('click',function(){all().forEach(function(x){x.open=false})});
+var tb=document.getElementById('theme');
+function syncTheme(){tb.textContent=document.documentElement.getAttribute('data-theme')==='light'?'Чёрный фон':'Белый фон'}
+tb.addEventListener('click',function(){var r=document.documentElement;r.setAttribute('data-theme',r.getAttribute('data-theme')==='light'?'dark':'light');syncTheme()});
+syncTheme();
+function go(id){var el=document.getElementById(id);if(!el)return;el.open=true;
+  var rm=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  el.scrollIntoView({behavior:rm?'auto':'smooth',block:'start'});}
+document.querySelectorAll('.node').forEach(function(n){
+  n.addEventListener('click',function(){go(n.getAttribute('data-go'))});
+  n.addEventListener('keydown',function(ev){if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();go(n.getAttribute('data-go'))}});
+});
+</script>
+</body></html>
